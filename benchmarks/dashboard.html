@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐦 Canary Red Team Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e17;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --border: #2a3650;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --accent: #38bdf8;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+  }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .header h1 span { color: var(--accent); }
+
+  .header .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--bg3);
+    position: relative;
+  }
+
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 24px 40px;
+  }
+
+  .grid.two { grid-template-columns: 1fr 1fr; }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text2);
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .big-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .big-number.green { color: var(--green); }
+  .big-number.red { color: var(--red); }
+  .big-number.yellow { color: var(--yellow); }
+  .big-number.accent { color: var(--accent); }
+
+  .big-label {
+    font-size: 14px;
+    color: var(--text2);
+    margin-top: 6px;
+  }
+
+  /* Confusion matrix */
+  .matrix {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+  }
+
+  .matrix .cell {
+    padding: 12px 16px;
+    text-align: center;
+    border-radius: 4px;
+  }
+
+  .matrix .header-cell {
+    color: var(--text2);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 8px;
+  }
+
+  .matrix .label-cell {
+    color: var(--text2);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: right;
+    padding: 12px 12px 12px 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .matrix .tp { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+  .matrix .tn { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+  .matrix .fp { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+  .matrix .fn { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+
+  /* Category bars */
+  .cat-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .cat-name {
+    width: 200px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    flex-shrink: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .cat-bar-bg {
+    flex: 1;
+    height: 24px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .cat-bar-label {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  /* Stealth chart */
+  .stealth-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .stealth-level {
+    width: 80px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .stealth-bar-bg {
+    flex: 1;
+    height: 20px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .stealth-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .stealth-pct {
+    width: 60px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* Results feed */
+  .feed {
+    padding: 0 40px 40px;
+  }
+
+  .feed h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text2);
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .feed-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .feed-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+  }
+
+  .feed-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(42, 54, 80, 0.5);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    vertical-align: top;
+  }
+
+  .feed-table tr.correct td:first-child { border-left: 3px solid var(--green); }
+  .feed-table tr.incorrect td:first-child { border-left: 3px solid var(--red); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge.safe { background: rgba(74,222,128,0.15); color: var(--green); }
+  .badge.blocked { background: rgba(248,113,113,0.15); color: var(--red); }
+  .badge.correct { background: rgba(74,222,128,0.15); color: var(--green); }
+  .badge.wrong { background: rgba(251,191,36,0.15); color: var(--yellow); }
+
+  .prompt-preview {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  .signals-list {
+    font-size: 10px;
+    color: var(--purple);
+  }
+
+  .feed-scroll {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg2);
+  }
+
+  .status-banner {
+    text-align: center;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .complete-banner {
+    text-align: center;
+    padding: 16px;
+    font-size: 16px;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .section-pad { padding: 0 40px 24px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🐦 <span>Canary</span> Red Team Dashboard</h1>
+  </div>
+  <div class="meta" id="status">Connecting...</div>
+</div>
+<div class="progress-bar"><div class="fill" id="progress"></div></div>
+
+<div class="grid" id="stats-grid">
+  <div class="card">
+    <h2>Accuracy</h2>
+    <div class="big-number accent" id="accuracy">—</div>
+    <div class="big-label"><span id="correct-count">0</span> / <span id="total-count">0</span> correct</div>
+  </div>
+  <div class="card">
+    <h2>Block Recall</h2>
+    <div class="big-number green" id="recall">—</div>
+    <div class="big-label">Of attacks, how many were caught</div>
+  </div>
+  <div class="card">
+    <h2>False Positive Rate</h2>
+    <div class="big-number red" id="fpr">—</div>
+    <div class="big-label">Of safe inputs, wrongly blocked</div>
+  </div>
+</div>
+
+<div class="grid two">
+  <div class="card">
+    <h2>Confusion Matrix</h2>
+    <div class="matrix">
+      <div class="header-cell"></div>
+      <div class="header-cell">Predicted Safe</div>
+      <div class="header-cell">Predicted Block</div>
+      <div class="label-cell">Actually Safe</div>
+      <div class="cell tp" id="tp">0</div>
+      <div class="cell fp" id="fp">0</div>
+      <div class="label-cell">Actually Bad</div>
+      <div class="cell fn" id="fn">0</div>
+      <div class="cell tn" id="tn">0</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Detection by Stealth Level</h2>
+    <div id="stealth-chart"></div>
+  </div>
+</div>
+
+<div class="section-pad">
+  <div class="card" style="padding: 20px 24px;">
+    <h2>Detection by Category</h2>
+    <div id="category-chart"></div>
+  </div>
+</div>
+
+<div class="feed">
+  <h2>Results Feed</h2>
+  <div id="banner" class="status-banner">Waiting for results...</div>
+  <div class="feed-scroll">
+    <table class="feed-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Category</th>
+          <th>Goal</th>
+          <th>Stealth</th>
+          <th>Verdict</th>
+          <th>Result</th>
+          <th>Blocked By</th>
+          <th>Risk</th>
+          <th>ms</th>
+          <th>Signals</th>
+          <th>Prompt</th>
+        </tr>
+      </thead>
+      <tbody id="feed-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const state = {
+  results: [],
+  tp: 0, tn: 0, fp: 0, fn: 0,
+  categories: {},
+  stealth: {},
+  total: 0,
+  complete: false,
+};
+
+function update(r) {
+  state.results.push(r);
+  state.total = r.total;
+
+  if (r.expected_safe && r.actual_safe) state.tp++;
+  else if (!r.expected_safe && !r.actual_safe) state.tn++;
+  else if (r.expected_safe && !r.actual_safe) state.fp++;
+  else state.fn++;
+
+  const cat = r.category;
+  if (!state.categories[cat]) state.categories[cat] = { total: 0, correct: 0, fn: 0, fp: 0 };
+  state.categories[cat].total++;
+  if (r.correct) state.categories[cat].correct++;
+  if (r.expected_safe && !r.actual_safe) state.categories[cat].fp++;
+  if (!r.expected_safe && r.actual_safe) state.categories[cat].fn++;
+
+  const sl = r.stealth;
+  if (!state.stealth[sl]) state.stealth[sl] = { total: 0, correct: 0 };
+  state.stealth[sl].total++;
+  if (r.correct) state.stealth[sl].correct++;
+
+  render();
+  renderRow(r);
+}
+
+function render() {
+  const n = state.results.length;
+  const correct = state.tp + state.tn;
+  const acc = n > 0 ? (100 * correct / n).toFixed(1) : '—';
+  const recall = (state.tn + state.fn) > 0 ? (100 * state.tn / (state.tn + state.fn)).toFixed(1) : '—';
+  const fpr = (state.fp + state.tp) > 0 ? (100 * state.fp / (state.fp + state.tp)).toFixed(1) : '—';
+
+  document.getElementById('accuracy').textContent = acc === '—' ? '—' : acc + '%';
+  document.getElementById('recall').textContent = recall === '—' ? '—' : recall + '%';
+  document.getElementById('fpr').textContent = fpr === '—' ? '—' : fpr + '%';
+  document.getElementById('correct-count').textContent = correct;
+  document.getElementById('total-count').textContent = n;
+  document.getElementById('progress').style.width = (100 * n / (state.total || 1)) + '%';
+  document.getElementById('status').textContent = `${n} / ${state.total} • ${state.complete ? 'Complete' : 'Running...'}`;
+
+  document.getElementById('tp').textContent = state.tp;
+  document.getElementById('tn').textContent = state.tn;
+  document.getElementById('fp').textContent = state.fp;
+  document.getElementById('fn').textContent = state.fn;
+
+  // Stealth chart
+  const stealthEl = document.getElementById('stealth-chart');
+  let stealthHtml = '';
+  const stealthColors = { 1: '#4ade80', 2: '#38bdf8', 3: '#fbbf24', 4: '#fb923c', 5: '#f87171' };
+  for (let i = 1; i <= 5; i++) {
+    const s = state.stealth[i] || { total: 0, correct: 0 };
+    const pct = s.total > 0 ? (100 * s.correct / s.total).toFixed(0) : 0;
+    stealthHtml += `
+      <div class="stealth-row">
+        <div class="stealth-level">${'★'.repeat(i)}</div>
+        <div class="stealth-bar-bg">
+          <div class="stealth-bar-fill" style="width:${pct}%;background:${stealthColors[i]}"></div>
+        </div>
+        <div class="stealth-pct">${s.total > 0 ? pct + '%' : '—'}</div>
+      </div>`;
+  }
+  stealthEl.innerHTML = stealthHtml;
+
+  // Category chart
+  const catEl = document.getElementById('category-chart');
+  let catHtml = '';
+  const cats = Object.entries(state.categories).sort((a, b) => {
+    const aAcc = a[1].total > 0 ? a[1].correct / a[1].total : 0;
+    const bAcc = b[1].total > 0 ? b[1].correct / b[1].total : 0;
+    return aAcc - bAcc;
+  });
+  for (const [name, s] of cats) {
+    const pct = s.total > 0 ? (100 * s.correct / s.total).toFixed(0) : 0;
+    const color = pct >= 90 ? 'var(--green)' : pct >= 70 ? 'var(--yellow)' : 'var(--red)';
+    catHtml += `
+      <div class="cat-row">
+        <div class="cat-name">${name}</div>
+        <div class="cat-bar-bg">
+          <div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div>
+          <div class="cat-bar-label">${pct}% (${s.correct}/${s.total}) ${s.fn > 0 ? '⚠ ' + s.fn + ' missed' : ''} ${s.fp > 0 ? '🚫 ' + s.fp + ' false+' : ''}</div>
+        </div>
+      </div>`;
+  }
+  catEl.innerHTML = catHtml;
+}
+
+function renderRow(r) {
+  const tbody = document.getElementById('feed-body');
+  const tr = document.createElement('tr');
+  tr.className = r.correct ? 'correct' : 'incorrect';
+
+  const signals = (r.signals || []).map(s => s.category).join(', ');
+  const risk = r.risk_score !== null && r.risk_score !== undefined ? r.risk_score.toFixed(2) : '—';
+
+  tr.innerHTML = `
+    <td>${r.id}</td>
+    <td>${r.category}</td>
+    <td>${r.goal}</td>
+    <td>${'★'.repeat(r.stealth)}</td>
+    <td><span class="badge ${r.actual_safe ? 'safe' : 'blocked'}">${r.actual_safe ? 'SAFE' : 'BLOCK'}</span></td>
+    <td><span class="badge ${r.correct ? 'correct' : 'wrong'}">${r.correct ? '✓' : '✗'}</span></td>
+    <td>${r.blocked_by || '—'}</td>
+    <td>${risk}</td>
+    <td>${r.latency_ms}</td>
+    <td class="signals-list">${signals || '—'}</td>
+    <td class="prompt-preview" title="${r.prompt_preview.replace(/"/g, '&quot;')}">${r.prompt_preview}</td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// SSE connection
+const evtSource = new EventSource('/events');
+
+evtSource.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.type === 'result') {
+    document.getElementById('banner').style.display = 'none';
+    update(data);
+  } else if (data.type === 'complete') {
+    state.complete = true;
+    render();
+    document.getElementById('banner').style.display = 'block';
+    document.getElementById('banner').className = 'complete-banner';
+    document.getElementById('banner').textContent = '✅ Run complete — ' + state.results.length + ' prompts tested';
+  }
+};
+
+evtSource.onerror = () => {
+  document.getElementById('status').textContent = 'Connection lost — refresh to reconnect';
+};
+</script>
+
+</body>
+</html>
