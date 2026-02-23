@@ -1,6 +1,6 @@
-# Contributing to Canary-LLM
+# Contributing to Little Canary
 
-Thank you for considering contributing to Canary-LLM. This document explains how to get started.
+Thank you for considering contributing to Little Canary. This document explains how to get started.
 
 ## Development Setup
 

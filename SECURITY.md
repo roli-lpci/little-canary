@@ -38,6 +38,6 @@ We follow coordinated disclosure. After a fix is released, we will:
 
 ## Security Design Notes
 
-Canary-LLM is a security tool with a **fail-open** design: if the canary model or Ollama is unavailable, inputs pass through unscreened. This is a deliberate availability-over-security tradeoff. Deployments should use `pipeline.health_check()` at startup and monitor canary availability in production.
+Little Canary is a security tool with a **fail-open** design: if the canary model or Ollama is unavailable, inputs pass through unscreened. This is a deliberate availability-over-security tradeoff. Deployments should use `pipeline.health_check()` at startup and monitor canary availability in production.
 
 The canary model has zero permissions — its output is never executed or forwarded to production systems. It exists only to be observed.

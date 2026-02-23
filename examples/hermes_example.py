@@ -1,5 +1,5 @@
 """
-hermes_example.py — Canary-LLM integration for Hermes chatbot
+hermes_example.py — Little Canary integration for Hermes chatbot
 
 Add little_canary/ to your Hermes project and wrap your chat endpoint.
 Scans every user message before it reaches the production LLM.

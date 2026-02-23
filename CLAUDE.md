@@ -1,8 +1,8 @@
-# CLAUDE.md — Agent Context for Canary-LLM
+# CLAUDE.md — Agent Context for Little Canary
 
 ## Project Overview
 
-Canary-LLM is a prompt injection detection library that uses a small, sacrificial LLM as a behavioral probe. Instead of classifying inputs, it feeds user input to a sandboxed canary model and analyzes the canary's response for signs of compromise. Three deployment modes: block, advisory, full. Runs locally via Ollama.
+Little Canary is a prompt injection detection library that uses a small, sacrificial LLM as a behavioral probe. Instead of classifying inputs, it feeds user input to a sandboxed canary model and analyzes the canary's response for signs of compromise. Three deployment modes: block, advisory, full. Runs locally via Ollama.
 
 ## Tech Stack
 

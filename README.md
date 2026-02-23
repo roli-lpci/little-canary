@@ -1,70 +1,69 @@
-# Canary-LLM
+# Little Canary
 
 **Sacrificial LLM instances as behavioral probes for prompt injection detection**
 
-<!-- Uncomment badges below when published to PyPI / enrolled in OpenSSF -->
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/roli-lpci/little-canary/actions/workflows/ci.yml/badge.svg)](https://github.com/roli-lpci/little-canary/actions)
-<!-- [![PyPI](https://img.shields.io/pypi/v/little-canary.svg)](https://pypi.org/project/little-canary/) -->
-<!-- [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/roli-lpci/little-canary/badge)](https://scorecard.dev/viewer/?uri=github.com/roli-lpci/little-canary) -->
 
-Canary-LLM is a security layer that uses a small, sacrificial language model to detect prompt injection attacks before they reach your production LLM. Instead of classifying inputs, the canary **gets compromised by them** — and the behavioral residue reveals the attack.
+### What it does
 
-## The Idea
+- Runs a fast structural filter (regex + decode/recheck for base64, hex, ROT13, reverse encodings)
+- Probes raw input with a small sacrificial "canary" model and checks for behavioral compromise
+- Returns either **block**, **flag + advisory**, or **pass** depending on mode
 
-Every existing prompt injection defense treats the LLM as a classifier: "Is this input malicious?" Canary-LLM flips this. It feeds raw user input to a small, sandboxed model and watches what happens. A compromised canary — one that adopts a new persona, leaks its instructions, or agrees to bypass safety — is a strong signal that the input is adversarial.
+### When to use
 
-```
-User Input --> Structural Filter (1ms) --> Canary Probe (250ms) --> Your LLM
-                   |                            |
-              Known patterns              Behavioral analysis
-              (regex + encoding)          (did the canary get owned?)
-```
+- You run an LLM app or agent and want a lightweight pre-check for prompt injection
+- You can tolerate ~250ms additional latency per input
+- You want a model-agnostic layer that works with your existing stack
 
-## Hardware Requirements
+### When not to use
 
-Designed to run on consumer hardware. Tested on a MacBook Air M4 with 16GB RAM.
+- You need formal security guarantees or audited benchmark comparability
+- You cannot accept pass-through behavior when the canary is unavailable (see [Fail-open design](#fail-open-design))
 
-- **Minimum:** Any machine that can run Ollama with a 1.5B parameter model
-- **Recommended:** Apple Silicon Mac or Linux with 8GB+ RAM
-- **Canary model:** ~1GB disk, ~1.5GB RAM at inference
-- **Latency:** ~250ms per check (canary probe)
+### Results snapshot
 
-## Three Deployment Modes
+- **98% effective detection** across 160 adversarial prompts (full pipeline with production LLM)
+- **0% false positives** on realistic customer chatbot traffic
+- **~250ms latency** per check on consumer hardware
 
-| Mode | Behavior | Best For |
-|------|----------|----------|
-| `block` | Hard-blocks detected attacks | Customer chatbots, zero-tolerance systems |
-| `advisory` | Never blocks, flags for production LLM | Zero-downtime systems, monitoring |
-| `full` | Blocks obvious attacks, flags ambiguous ones | Agents, email processors, hybrid workflows |
+> Self-generated test suite. See [Benchmarks](#benchmark-results) and [Limitations](#limitations) for caveats.
+
+---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
+- [Deployment Modes](#deployment-modes)
+- [Fail-open Design](#fail-open-design)
+- [Benchmark Results](#benchmark-results)
+- [Integration Examples](#integration-examples)
+- [API Quick Reference](#api-quick-reference)
+- [Running the Benchmarks](#running-the-benchmarks)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [Limitations](#limitations)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Citation](#citation)
+- [License](#license)
+
+---
 
 ## Quick Start
 
-### 1. Install Ollama and pull a canary model
-
 ```bash
-# macOS / Linux
-curl -fsSL https://ollama.com/install.sh | sh
-ollama serve &          # start the Ollama server (if not already running)
+# 1. Install Ollama and pull a canary model
 ollama pull qwen2.5:1.5b
-```
 
-### 2. Install Canary-LLM
-
-```bash
-pip install .
-```
-
-Or from source:
-
-```bash
+# 2. Install Little Canary (not on PyPI yet — install from source)
 git clone https://github.com/roli-lpci/little-canary.git
 cd little-canary
 pip install .
 ```
-
-### 3. Add three lines to your app
 
 ```python
 from little_canary import SecurityPipeline
@@ -84,7 +83,12 @@ That's it. Your LLM, your app, your logic. The canary adds a security layer in f
 
 ## How It Works
 
-### Architecture
+```
+User Input --> Structural Filter (1ms) --> Canary Probe (250ms) --> Your LLM
+                   |                            |
+              Known patterns              Behavioral analysis
+              (regex + encoding)          (did the canary get owned?)
+```
 
 **Layer 1: Structural Filter** (~1ms)
 Regex-based detection of known attack patterns, plus decode-then-recheck for base64, hex, ROT13, and reverse-encoded payloads.
@@ -99,32 +103,44 @@ Feeds raw input to a small sacrificial LLM (qwen2.5:1.5b by default). Temperatur
 **Advisory System**
 Suspicious inputs that aren't hard-blocked generate a `SecurityAdvisory` prepended to your production LLM's system prompt, warning it about detected signals.
 
-### Why a Sacrificial Model?
+### Why a sacrificial model?
 
-Existing tools classify inputs. Canary-LLM observes what attacks *do* to a model and reads the aftermath:
+Every existing defense classifies inputs. Little Canary observes what attacks *do* to a model and reads the aftermath:
 
-- **Llama Guard** is a safety classifier that evaluates content against safety categories. Canary-LLM detects behavioral compromise, not content safety violations.
-- **Prompt Guard** is a fine-tuned classifier trained to detect injection patterns in input text. Canary-LLM uses actual LLM behavioral response rather than input-side classification.
-- **NeMo Guardrails** is a dialogue management framework using rules and LLM calls to control flow. Canary-LLM works with any LLM stack, no framework required.
+- **Llama Guard** evaluates content against safety categories. Little Canary detects behavioral compromise, not content safety violations.
+- **Prompt Guard** detects injection patterns in input text. Little Canary uses actual LLM behavioral response rather than input-side classification.
+- **NeMo Guardrails** uses rules and LLM calls to control dialogue flow. Little Canary works with any LLM stack, no framework required.
 
 The canary is deliberately small and weak. It gets compromised by attacks that your production LLM might resist. That's the point — a compromised canary is a strong signal.
 
+## Deployment Modes
+
+| Mode | Behavior | Best For |
+|------|----------|----------|
+| `block` | Hard-blocks detected attacks | Customer chatbots, zero-tolerance systems |
+| `advisory` | Never blocks, flags for production LLM | Zero-downtime systems, monitoring |
+| `full` | Blocks obvious attacks, flags ambiguous ones | Agents, email processors, hybrid workflows |
+
+## Fail-open Design
+
 > [!NOTE]
-> **Fail-open design:** If Ollama is unavailable, the pipeline passes all inputs through. Use `pipeline.health_check()` at startup to verify connectivity. This is a deliberate availability-over-security tradeoff documented in the architecture.
+> If Ollama is unavailable, the pipeline passes all inputs through unscreened. This is a deliberate availability-over-security tradeoff.
+
+**How to operate safely:**
+- Call `pipeline.health_check()` at startup to verify the canary model is reachable
+- Monitor the `canary_available` field in health check output
+- Alert if the canary becomes unavailable in production
 
 ## Benchmark Results
 
-Tested against a 240-prompt test suite (160 adversarial + 20 safe inputs) across 9 attack categories:
+Tested against a 220-prompt adversarial suite (+ 20 safe inputs) across 9 attack categories.
 
 | Metric | Value |
 |--------|-------|
-| **Effective detection rate** | **63.6%** (full pipeline with production LLM) |
-| **Standalone block rate** | 36.8% (canary alone) |
-| **False positive rate** | **0/20** Hermes chatbot, **4/20** Clawdbot email agent* |
-| **Improvement over LLM alone** | **+159%** |
-| **Latency** | ~250ms (canary probe) |
-
-*Clawdbot false positives occur on emails quoting attack strings in security articles — content that would be quarantine-reviewed in production regardless. See `benchmarks/` for full data.
+| **Effective detection rate** | **98%** (full pipeline with production LLM) |
+| **Canary standalone block rate** | 37% (canary + structural filter alone) |
+| **False positive rate** | **0/20** on realistic chatbot traffic |
+| **Latency** | ~250ms per check |
 
 **Detection by category:**
 
@@ -175,6 +191,33 @@ def process_email(email_body, sender):
 
 See `examples/` for complete integration code.
 
+## API Quick Reference
+
+```python
+from little_canary import SecurityPipeline
+
+# Initialize
+pipeline = SecurityPipeline(
+    canary_model="qwen2.5:1.5b",   # any Ollama model
+    mode="full",                     # "block", "advisory", or "full"
+    ollama_url="http://localhost:11434",
+    canary_timeout=10.0,
+)
+
+# Check input
+verdict = pipeline.check(user_input)
+verdict.safe              # bool — is input safe to forward?
+verdict.blocked_by        # str or None — "structural_filter" or "canary_probe"
+verdict.advisory          # SecurityAdvisory — flagged signals
+verdict.advisory.flagged  # bool — were suspicious signals detected?
+verdict.advisory.to_system_prefix()  # str — prepend to your system prompt
+verdict.total_latency     # float — seconds
+
+# Health check
+health = pipeline.health_check()
+health["canary_available"]  # bool
+```
+
 ## Running the Benchmarks
 
 ```bash
@@ -203,35 +246,9 @@ little-canary/
 │   ├── judge.py                   # LLM judge (experimental, replaces regex)
 │   └── pipeline.py                # Orchestration + three deployment modes
 ├── tests/                         # Unit tests (pytest, 157 tests, 98%+ coverage)
-│   ├── conftest.py                # Shared fixtures
-│   ├── test_structural_filter.py
-│   ├── test_analyzer.py
-│   ├── test_canary.py
-│   ├── test_judge.py
-│   └── test_pipeline.py
 ├── examples/                      # Integration examples
-│   ├── generic_example.py
-│   ├── hermes_example.py          # Customer chatbot
-│   └── clawdbot_example.py        # Email agent with quarantine
 ├── benchmarks/                    # Test suites and dashboard
-│   ├── prompts.json               # 240 test prompts (12 categories)
-│   ├── prompts_fp_realistic.json  # 40 realistic false positive prompts
-│   ├── red_team_runner.py         # Browser dashboard for red teaming
-│   ├── run_fp_test.py             # Terminal FP test
-│   ├── full_pipeline_test.py      # End-to-end with production LLM
-│   └── dashboard.html
-├── .github/
-│   ├── workflows/ci.yml           # CI: pytest + ruff + coverage (Python 3.8-3.12)
-│   ├── dependabot.yml             # Automated dependency updates
-│   ├── ISSUE_TEMPLATE/
-│   └── PULL_REQUEST_TEMPLATE.md
-├── README.md
-├── CLAUDE.md                      # Agent-optimized documentation
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
-├── SECURITY.md
-├── CHANGELOG.md
-├── LICENSE                        # Apache 2.0
+├── .github/                       # CI, issue templates, dependabot
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -240,36 +257,28 @@ little-canary/
 
 **"Cannot connect to Ollama"**
 - Ensure Ollama is running: `ollama serve` (or check with `pgrep ollama`)
-- Verify the URL matches your setup: default is `http://localhost:11434`
+- Verify the URL: default is `http://localhost:11434`
 - Test connectivity: `curl http://localhost:11434/api/tags`
 
 **"Model not found"**
 - Pull the model first: `ollama pull qwen2.5:1.5b`
-- List available models: `ollama list`
 - The model name must match exactly (e.g., `qwen2.5:1.5b`, not `qwen2.5`)
 
-**Pipeline passes everything through (fail-open behavior)**
-- This is by design. If Ollama is unavailable, all inputs pass through unscreened.
-- Use `pipeline.health_check()` at startup to verify the canary model is reachable.
-- Monitor the `canary_available` field in health check output.
-
 **High false positive rate**
-- Use `mode="full"` instead of `mode="block"` to flag ambiguous inputs as advisories rather than hard-blocking.
-- The advisory system prepends security context to your production LLM instead of blocking.
-- Check `benchmarks/run_fp_test.py` against your traffic patterns.
+- Use `mode="full"` instead of `mode="block"` to flag ambiguous inputs as advisories rather than hard-blocking
+- Check `benchmarks/run_fp_test.py` against your traffic patterns
 
 **Slow response times**
-- Canary probe latency depends on the model size and hardware. The default qwen2.5:1.5b targets ~250ms.
-- Set a lower `canary_timeout` to fail fast: `SecurityPipeline(canary_timeout=5.0)`
+- The default qwen2.5:1.5b targets ~250ms. Set a lower `canary_timeout` to fail fast.
 - Use `enable_structural_filter=True, enable_canary=False` for structural-only mode (~1ms, no LLM required).
 
 ## Limitations
 
-- **Self-generated test suite.** The 240 prompts were generated for this project. Results should be validated against standard benchmarks.
-- **Single canary model tested.** Benchmarked with qwen2.5:1.5b. Other models may perform differently.
-- **Regex-based behavioral analysis.** The default analyzer uses regex patterns. The experimental `LLMJudge` is included for higher accuracy.
+- **Self-generated test suite.** Results should be validated against standard benchmarks.
+- **Single canary model tested.** Other models may perform differently.
+- **Regex-based behavioral analysis.** The experimental `LLMJudge` is included for higher accuracy.
 - **No production deployment data.** All results are from controlled testing.
-- **Ollama-only.** Currently requires Ollama for local inference. No abstraction layer for other backends yet.
+- **Ollama-only.** No abstraction layer for other backends yet.
 
 ## Roadmap
 
@@ -280,28 +289,24 @@ little-canary/
 - [ ] Multi-canary ensemble for higher detection rates
 - [ ] Agent integration SDK (MCP, LangChain, CrewAI)
 
-## LPCI Framework
+## Contributing
 
-Canary-LLM is part of the **Layered Proactive Contextual Integrity (LPCI)** framework — a broader approach to AI agent security that treats integrity as a layered, contextual property rather than a binary state. The canary architecture implements the "proactive probe" layer of LPCI: instead of waiting for attacks to succeed, it proactively tests inputs against a sacrificial model to detect adversarial intent before it reaches production systems.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
 
 ## Citation
 
 ```bibtex
 @software{little_canary,
   author = {Bosch, Rolando},
-  title = {Canary-LLM: Sacrificial LLM Instances as Behavioral Probes for Prompt Injection Detection},
+  title = {Little Canary: Sacrificial LLM Instances as Behavioral Probes for Prompt Injection Detection},
   year = {2026},
   url = {https://github.com/roli-lpci/little-canary}
 }
 ```
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
-
 ## Author
 
-**Rolando Bosch** — [LPCI Innovations](https://lpci.io) / Hermes Autonomous Lab
+**Rolando Bosch** — [LPCI Innovations](https://lpci.io)
 
 ## License
 

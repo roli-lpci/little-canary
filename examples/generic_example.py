@@ -1,5 +1,5 @@
 """
-generic_example.py — Canary-LLM integration for any LLM application
+generic_example.py — Little Canary integration for any LLM application
 
 Three lines to add security scanning to any LLM app.
 

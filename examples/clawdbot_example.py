@@ -1,5 +1,5 @@
 """
-clawdbot_example.py — Canary-LLM integration for Clawdbot / OpenClaw
+clawdbot_example.py — Little Canary integration for Clawdbot / OpenClaw
 
 Drop little_canary/ into your Clawdbot workspace and add this to your
 email processing hook. Scans incoming emails before the agent processes them.
