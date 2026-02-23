@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Little Canary: Sacrificial LLM Instances as Behavioral Probes for Prompt Injection Detection"
+authors:
+  - family-names: Bosch
+    given-names: Rolando
+    email: lpcisystems@gmail.com
+    affiliation: LPCI Innovations
+version: 0.1.0
+date-released: 2026-02-21
+license: Apache-2.0
+url: https://github.com/roli-lpci/little-canary
+repository-code: https://github.com/roli-lpci/little-canary
+keywords:
+  - llm
+  - security
+  - prompt-injection
+  - ai-safety
+  - canary
+  - ollama

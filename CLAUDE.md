@@ -30,7 +30,7 @@ examples/                      # Integration examples (not part of package)
   clawdbot_example.py          # Email agent (full mode with quarantine)
 
 benchmarks/                    # Test harnesses (not part of package)
-  prompts.json                 # 240 adversarial + 20 safe test prompts
+  prompts.json                 # 160 adversarial + 20 safe test prompts (180 total)
   prompts_fp_realistic.json    # 40 realistic false positive prompts
   red_team_runner.py           # Live dashboard + SSE event stream
   run_fp_test.py               # False positive test (terminal)

@@ -25,11 +25,11 @@
 
 ### Results snapshot
 
-- **98% effective detection** across 160 adversarial prompts (full pipeline with production LLM)
-- **0% false positives** on realistic customer chatbot traffic
+- **98% effective detection** on our internal red-team suite (160 adversarial prompts). Not yet validated on Garak/HarmBench.
+- **0% false positives** on 40 realistic customer chatbot prompts
 - **~250ms latency** per check on consumer hardware
 
-> Self-generated test suite. See [Benchmarks](#benchmark-results) and [Limitations](#limitations) for caveats.
+> Internal test suite — see [Benchmarks](#benchmark-results) and [Limitations](#limitations) for methodology and caveats.
 
 ---
 
@@ -133,13 +133,13 @@ The canary is deliberately small and weak. It gets compromised by attacks that y
 
 ## Benchmark Results
 
-Tested against a 220-prompt adversarial suite (+ 20 safe inputs) across 9 attack categories.
+Tested against an internal red-team suite of 160 adversarial prompts across 9 attack categories, plus a separate false-positive test of 40 realistic chatbot prompts.
 
 | Metric | Value |
 |--------|-------|
 | **Effective detection rate** | **98%** (full pipeline with production LLM) |
 | **Canary standalone block rate** | 37% (canary + structural filter alone) |
-| **False positive rate** | **0/20** on realistic chatbot traffic |
+| **False positive rate** | **0/40** on realistic chatbot traffic |
 | **Latency** | ~250ms per check |
 
 **Detection by category:**
@@ -153,6 +153,8 @@ Tested against a 220-prompt adversarial suite (+ 20 safe inputs) across 9 attack
 | Tool trigger | 65% | 20 |
 | Context stuffing | 50% | 20 |
 | Encoding/obfuscation | 40% | 20 |
+| Paired obvious | — | 10 |
+| Paired stealthy | — | 10 |
 
 > [!WARNING]
 > **Self-generated test suite.** These prompts were created for this project, not drawn from established adversarial benchmarks. Validate against TensorTrust, Garak, or HarmBench before comparing to other tools.
@@ -221,7 +223,7 @@ health["canary_available"]  # bool
 ## Running the Benchmarks
 
 ```bash
-# Red team suite (240 prompts, live dashboard)
+# Red team suite (160 adversarial + 20 safe prompts, live dashboard)
 cd benchmarks
 python3 red_team_runner.py --canary qwen2.5:1.5b
 # Dashboard at http://localhost:8899
@@ -245,7 +247,7 @@ little-canary/
 │   ├── analyzer.py                # Behavioral analysis (regex-based)
 │   ├── judge.py                   # LLM judge (experimental, replaces regex)
 │   └── pipeline.py                # Orchestration + three deployment modes
-├── tests/                         # Unit tests (pytest, 157 tests, 98%+ coverage)
+├── tests/                         # Unit tests (pytest, 98%+ coverage)
 ├── examples/                      # Integration examples
 ├── benchmarks/                    # Test suites and dashboard
 ├── .github/                       # CI, issue templates, dependabot
@@ -300,13 +302,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution gu
   author = {Bosch, Rolando},
   title = {Little Canary: Sacrificial LLM Instances as Behavioral Probes for Prompt Injection Detection},
   year = {2026},
-  url = {https://github.com/roli-lpci/little-canary}
+  url = {https://github.com/roli-lpci/little-canary},
+  license = {Apache-2.0}
 }
 ```
-
-## Author
-
-**Rolando Bosch** — [LPCI Innovations](https://lpci.io)
 
 ## License
 

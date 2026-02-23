@@ -25,10 +25,10 @@ Initial open source release.
 ### Security
 - Tightened `requests` dependency to `>=2.32.2` (CVE-2024-35195)
 - Dashboard server binds to localhost only (`127.0.0.1`)
-- License changed from MIT to Apache 2.0 (patent grant for AI tooling)
+- Licensed under Apache 2.0 (patent grant for AI tooling)
 
 ### Benchmarks
-- 63.6% effective detection (canary + gemma3:27b production LLM)
-- 36.8% standalone block rate
-- 0% false positive rate on Hermes chatbot traffic
-- 159% improvement over production LLM alone
+- 98% effective detection (full pipeline: canary + production LLM)
+- 37% standalone block rate (canary + structural filter alone)
+- 0% false positive rate on realistic chatbot traffic (0/40)
+- ~250ms latency per check
