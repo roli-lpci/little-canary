@@ -15,11 +15,11 @@ but only outputs SAFE or UNSAFE. Constrained output means the attack
 payload can't make the judge "do" anything — it's classification, not generation.
 """
 
+import logging
 import re
 import time
-import logging
-from typing import List, Optional
 from dataclasses import dataclass, field
+from typing import List, Optional
 
 import requests
 
@@ -186,7 +186,7 @@ class LLMJudge:
                 risk_score=0.0,
                 should_block=False,
                 canary_result=canary_result,
-                summary=f"Judge timed out. Passing by default.",
+                summary="Judge timed out. Passing by default.",
             )
         except requests.ConnectionError:
             logger.warning(f"Cannot connect to judge at {self.ollama_url}")
@@ -194,7 +194,7 @@ class LLMJudge:
                 risk_score=0.0,
                 should_block=False,
                 canary_result=canary_result,
-                summary=f"Judge unavailable. Passing by default.",
+                summary="Judge unavailable. Passing by default.",
             )
         except Exception as e:
             logger.exception("Judge error")

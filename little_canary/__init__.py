@@ -13,10 +13,10 @@ Author: Roli Bosch / Hermes Autonomous Lab / LPCI Innovations
 License: Apache-2.0
 """
 
-from .canary import CanaryProbe, CanaryResult
 from .analyzer import BehavioralAnalyzer
+from .canary import CanaryProbe, CanaryResult
 from .judge import LLMJudge
-from .pipeline import SecurityPipeline, SecurityAdvisory
+from .pipeline import SecurityAdvisory, SecurityPipeline
 from .structural_filter import StructuralFilter
 
 __version__ = "0.1.0"

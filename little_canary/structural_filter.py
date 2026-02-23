@@ -6,9 +6,9 @@ for encoded payloads. Detects base64/hex/ROT13 encoded content, decodes it,
 and re-checks the decoded payload against injection patterns.
 """
 
-import re
 import base64
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import List, Tuple
 
@@ -278,7 +278,7 @@ class StructuralFilter:
                 return True
             if 0x2028 <= code <= 0x2029:
                 return True
-            if 0xFEFF == code:
+            if code == 0xFEFF:
                 return True
         return False
 

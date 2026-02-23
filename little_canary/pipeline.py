@@ -16,15 +16,15 @@ If judge_model is specified, the LLM judge replaces the regex analyzer.
 Otherwise, falls back to the regex-based BehavioralAnalyzer.
 """
 
-import time
 import logging
+import time
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from .structural_filter import StructuralFilter, FilterResult
-from .canary import CanaryProbe, CanaryResult
 from .analyzer import BehavioralAnalyzer
+from .canary import CanaryProbe
 from .judge import LLMJudge
+from .structural_filter import StructuralFilter
 
 logger = logging.getLogger(__name__)
 

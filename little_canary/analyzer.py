@@ -16,10 +16,10 @@ RESIDUE of compromise — what a hijacked canary actually says — rather than
 trying to match the infinite variety of attack inputs.
 """
 
-import re
 import logging
+import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 from .canary import CanaryResult
 

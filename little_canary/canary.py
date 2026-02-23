@@ -11,8 +11,8 @@ Design choices:
   - Patterns tuned against canary output remain valid across runs
 """
 
-import time
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import Optional
 
