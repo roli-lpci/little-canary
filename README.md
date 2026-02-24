@@ -59,10 +59,8 @@
 # 1. Install Ollama and pull a canary model
 ollama pull qwen2.5:1.5b
 
-# 2. Install Little Canary (not on PyPI yet — install from source)
-git clone https://github.com/roli-lpci/little-canary.git
-cd little-canary
-pip install .
+# 2. Install Little Canary
+pip install little-canary
 ```
 
 ```python
