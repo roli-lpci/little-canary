@@ -36,6 +36,7 @@
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Agent Systems Quick Start](#agent-systems-quick-start)
 - [How It Works](#how-it-works)
 - [Deployment Modes](#deployment-modes)
 - [Fail-open Design](#fail-open-design)
@@ -78,6 +79,30 @@ response = your_llm(system=system, messages=[{"role": "user", "content": user_in
 ```
 
 That's it. Your LLM, your app, your logic. The canary adds a security layer in front.
+
+## Agent Systems Quick Start
+
+For modern agent stacks, treat Little Canary as **inbound risk sensing**, not your only control plane.
+
+Recommended deployment pattern:
+
+1. **Ingress scan** all untrusted text (chat, email, web content, tool output) with `pipeline.check()`.
+2. **Block/flag** using `mode="full"` or `mode="block"` depending on risk tolerance.
+3. **Attach advisory** (`verdict.advisory.to_system_prefix()`) before planner/tool decisions.
+4. **Pair with outbound/runtime controls** (e.g., command/domain policy monitor) for containment.
+
+Minimal agent wrapper:
+
+```python
+verdict = pipeline.check(untrusted_input)
+if not verdict.safe:
+    return {"status": "blocked", "reason": verdict.summary}
+
+guarded_system = verdict.advisory.to_system_prefix() + "\n" + base_system_prompt
+return run_agent(system=guarded_system, user_input=untrusted_input)
+```
+
+> Little Canary is strongest when paired with runtime enforcement (outbound policy + incident logs), especially for autonomous tool-using agents.
 
 ## How It Works
 
