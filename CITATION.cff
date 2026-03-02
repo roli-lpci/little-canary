@@ -7,8 +7,8 @@ authors:
     given-names: Rolando
     email: lpcisystems@gmail.com
     affiliation: LPCI Innovations
-version: 0.1.0
-date-released: 2026-02-21
+version: 0.2.1
+date-released: 2026-03-02
 license: Apache-2.0
 url: https://github.com/roli-lpci/little-canary
 repository-code: https://github.com/roli-lpci/little-canary
