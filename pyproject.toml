@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "little-canary"
-version = "0.1.0"
+version = "0.2.0"
 description = "Sacrificial LLM instances as behavioral probes for prompt injection detection"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.8"
 authors = [
-    {name = "Roli Bosch", email = "lpcisystems@gmail.com"},
+    {name = "Hermes Labs", email = "lpcisystems@gmail.com"},
 ]
 keywords = ["llm", "security", "prompt-injection", "ai-safety", "canary"]
 classifiers = [
