@@ -25,11 +25,11 @@
 
 ### Results snapshot
 
-- **98% effective detection** on our internal red-team suite (160 adversarial prompts). Not yet validated on Garak/HarmBench.
+- **99.0% detection on TensorTrust** (400 real attacks, Claude Opus), **94.8% with 3B local model**
 - **0% false positives** on 40 realistic customer chatbot prompts
 - **~250ms latency** per check on consumer hardware
 
-> Internal test suite — see [Benchmarks](#benchmark-results) and [Limitations](#limitations) for methodology and caveats.
+> TensorTrust benchmark — see [Benchmarks](#benchmark-results) and [Limitations](#limitations) for methodology and caveats.
 
 ---
 
@@ -160,7 +160,8 @@ Tested against an internal red-team suite of 160 adversarial prompts across 9 at
 
 | Metric | Value |
 |--------|-------|
-| **Effective detection rate** | **98%** (full pipeline with production LLM) |
+| **TensorTrust detection rate** | **99.0%** (400 attacks, Claude Opus as production LLM) |
+| **3B local model detection rate** | **94.8%** (TensorTrust, 400 attacks) |
 | **Canary standalone block rate** | 37% (canary + structural filter alone) |
 | **False positive rate** | **0/40** on realistic chatbot traffic |
 | **Latency** | ~250ms per check |
@@ -179,8 +180,8 @@ Tested against an internal red-team suite of 160 adversarial prompts across 9 at
 | Paired obvious | — | 10 |
 | Paired stealthy | — | 10 |
 
-> [!WARNING]
-> **Self-generated test suite.** These prompts were created for this project, not drawn from established adversarial benchmarks. Validate against TensorTrust, Garak, or HarmBench before comparing to other tools.
+> [!NOTE]
+> **TensorTrust validated.** v0.2.0 results are benchmarked against 400 real-world TensorTrust attacks. Internal red-team category breakdown above is from the original v0.1.0 test suite. See [littlecanary.ai](https://littlecanary.ai) for multi-model comparison.
 
 ## Integration Examples
 
@@ -299,15 +300,15 @@ little-canary/
 
 ## Limitations
 
-- **Self-generated test suite.** Results should be validated against standard benchmarks.
-- **Single canary model tested.** Other models may perform differently.
+- **TensorTrust validated (v0.2.0).** 99.0% on 400 attacks with Claude Opus; 94.8% with 3B model. Garak and HarmBench still pending.
+- **Multi-model tested (v0.2.0).** Performance varies by model — see [littlecanary.ai](https://littlecanary.ai) for comparison.
 - **Regex-based behavioral analysis.** The experimental `LLMJudge` is included for higher accuracy.
 - **No production deployment data.** All results are from controlled testing.
 - **Ollama-only.** No abstraction layer for other backends yet.
 
 ## Roadmap
 
-- [ ] Benchmark against TensorTrust, Garak, and HarmBench attack suites
+- [x] Benchmark against TensorTrust (99.0% detection, 400 attacks) — Garak and HarmBench still TODO
 - [ ] LLM judge to replace regex analyzer (higher accuracy)
 - [ ] Backend abstraction layer (vLLM, llama.cpp, OpenAI-compatible APIs)
 - [ ] Fine-tuned canary model (increased susceptibility = stronger signal)
