@@ -26,7 +26,7 @@ little_canary/                    # Core library (this is the installable packag
 
 examples/                      # Integration examples (not part of package)
   generic_example.py           # Minimal usage
-  hermes_example.py            # Customer chatbot (block mode)
+  chatbot_example.py           # Customer chatbot (block mode)
   clawdbot_example.py          # Email agent (full mode with quarantine)
 
 benchmarks/                    # Test harnesses (not part of package)

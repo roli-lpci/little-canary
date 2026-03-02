@@ -1,7 +1,7 @@
 """
-hermes_example.py — Little Canary integration for Hermes chatbot
+chatbot_example.py — Little Canary integration for a customer chatbot
 
-Add little_canary/ to your Hermes project and wrap your chat endpoint.
+Add little_canary/ to your project and wrap your chat endpoint.
 Scans every user message before it reaches the production LLM.
 
 For customer-facing chatbots, mode='block' is recommended:
@@ -57,7 +57,7 @@ def call_production_llm(message: str) -> str:
     # response = client.messages.create(
     #     model="claude-sonnet-4-20250514",
     #     messages=[{"role": "user", "content": message}],
-    #     system="You are Hermes, a helpful customer support assistant."
+    #     system="You are ChatAssistant, a helpful customer support assistant."
     # )
     # return response.content[0].text
     return f"[Production LLM would respond to: {message[:50]}...]"
