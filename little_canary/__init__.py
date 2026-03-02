@@ -19,7 +19,7 @@ from .judge import LLMJudge
 from .pipeline import SecurityAdvisory, SecurityPipeline
 from .structural_filter import StructuralFilter
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __author__ = "Roli Bosch"
 __all__ = [
     "CanaryProbe",
