@@ -14,17 +14,22 @@ License: Apache-2.0
 """
 
 from .analyzer import BehavioralAnalyzer
+from .audit_logger import AuditLogger
 from .canary import CanaryProbe, CanaryResult
+from .canary_guard import CanaryGuard, GuardResult
 from .judge import LLMJudge
 from .pipeline import SecurityAdvisory, SecurityPipeline
 from .structural_filter import StructuralFilter
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __author__ = "Roli Bosch"
 __all__ = [
+    "AuditLogger",
+    "CanaryGuard",
     "CanaryProbe",
     "CanaryResult",
     "BehavioralAnalyzer",
+    "GuardResult",
     "LLMJudge",
     "SecurityPipeline",
     "SecurityAdvisory",

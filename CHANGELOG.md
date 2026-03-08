@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-03-08
+
+### Added
+- `AuditLogger` — JSONL audit logging for every pipeline check. Writes `canary-audit.jsonl` (all checks) and `canary-alerts.jsonl` (blocked/flagged only). Input is stored as SHA-256 hash only, never raw text.
+- `CanaryGuard` — trust-aware wrapper around `SecurityPipeline`. Three trust tiers: TRUSTED (owner, advisory-only, never blocked), KNOWN (flagged, not passed), UNKNOWN (blocked). Override mechanism with rate limiting (5/hr).
+- Callback hooks on `SecurityPipeline`: `on_block`, `on_flag`, `on_pass` — exception-safe, never crash the pipeline.
+- `audit_log_dir` parameter on `SecurityPipeline` for automatic per-check logging.
+
 ## [0.2.2] - 2026-03-02
 
 ### Changed

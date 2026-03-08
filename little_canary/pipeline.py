@@ -19,9 +19,10 @@ Otherwise, falls back to the regex-based BehavioralAnalyzer.
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from .analyzer import BehavioralAnalyzer
+from .audit_logger import AuditLogger
 from .canary import CanaryProbe
 from .judge import LLMJudge
 from .structural_filter import StructuralFilter
@@ -153,6 +154,10 @@ class SecurityPipeline:
         seed: int = 42,
         judge_model: Optional[str] = None,
         judge_timeout: float = 15.0,
+        audit_log_dir: Optional[str] = None,
+        on_block: Optional[Callable[["PipelineVerdict"], None]] = None,
+        on_flag: Optional[Callable[["PipelineVerdict"], None]] = None,
+        on_pass: Optional[Callable[["PipelineVerdict"], None]] = None,
     ):
         if mode not in self.VALID_MODES:
             raise ValueError(f"mode must be one of {self.VALID_MODES}, got '{mode}'")
@@ -163,6 +168,16 @@ class SecurityPipeline:
         self.enable_canary = enable_canary
         self.block_threshold = block_threshold
         self.use_judge = judge_model is not None
+
+        # Callbacks (never raise — errors are caught and logged)
+        self._on_block = on_block
+        self._on_flag = on_flag
+        self._on_pass = on_pass
+
+        # Audit logger (optional; no-op if audit_log_dir is None)
+        self._audit_logger: Optional[AuditLogger] = (
+            AuditLogger(audit_log_dir) if audit_log_dir else None
+        )
 
         # Layer 1: Structural filter
         self.structural_filter = StructuralFilter(max_input_length=max_input_length)
@@ -196,6 +211,29 @@ class SecurityPipeline:
             logger.info("Using regex-based BehavioralAnalyzer (no judge_model specified)")
 
     def check(self, user_input: str) -> PipelineVerdict:
+        verdict = self._run_check(user_input)
+        self._fire_callbacks(verdict)
+        if self._audit_logger is not None:
+            try:
+                self._audit_logger.log(verdict)
+            except Exception as e:
+                logger.error("AuditLogger.log raised: %s", e)
+        return verdict
+
+    def _fire_callbacks(self, verdict: PipelineVerdict) -> None:
+        if not verdict.safe:
+            cb = self._on_block
+        elif verdict.advisory is not None and verdict.advisory.flagged:
+            cb = self._on_flag
+        else:
+            cb = self._on_pass
+        if cb is not None:
+            try:
+                cb(verdict)
+            except Exception as e:
+                logger.error("Pipeline callback raised: %s", e)
+
+    def _run_check(self, user_input: str) -> PipelineVerdict:
         start_time = time.monotonic()
         layers: List[LayerResult] = []
         blocked_by = None
