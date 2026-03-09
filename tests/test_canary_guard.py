@@ -3,9 +3,8 @@
 import hashlib
 import json
 import os
-import tempfile
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -21,7 +20,6 @@ from little_canary.canary_guard import (
     GuardResult,
 )
 from little_canary.pipeline import PipelineVerdict, SecurityAdvisory
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

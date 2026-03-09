@@ -17,7 +17,6 @@ from little_canary.pipeline import (
     SecurityPipeline,
 )
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
@@ -215,7 +214,8 @@ def test_input_not_in_log_entry():
     with tempfile.TemporaryDirectory() as tmpdir:
         al = AuditLogger(tmpdir)
         al.log(verdict)
-        raw = open(al.audit_path, encoding="utf-8").read()
+        with open(al.audit_path, encoding="utf-8") as fh:
+            raw = fh.read()
     assert secret not in raw
 
 
