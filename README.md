@@ -6,6 +6,8 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/roli-lpci/little-canary/actions/workflows/ci.yml/badge.svg)](https://github.com/roli-lpci/little-canary/actions)
+[![Paper](https://img.shields.io/badge/paper-Hermes_Labs-blue)](https://hermes-labs.ai)
+[![Hermes Labs](https://img.shields.io/badge/by-Hermes_Labs-purple)](https://hermes-labs.ai)
 
 ### What it does
 
