@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-22
+
+### Added
+- **`little-canary serve` CLI command** — persistent HTTP server mode for low-latency detection (~75ms vs 300-1200ms cold-start). Keeps the `SecurityPipeline` warm in memory.
+- **REST API endpoints** — `POST /check` (analyze text) and `GET /health` (pipeline status).
+- **`little_canary.server` module** — `run_server()` and `create_server()` functions for programmatic use and embedding.
+- **`little_canary.cli` module** — CLI dispatcher with `serve` subcommand (extensible for future commands).
+- **Console script entry point** — `pip install little-canary` now provides the `little-canary` command.
+
+### Changed
+- Bumped version to 0.3.0.
+
 ## [0.2.3] - 2026-03-08
 
 ### Added

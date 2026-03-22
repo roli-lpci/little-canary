@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "little-canary"
-version = "0.2.3"
+version = "0.3.0"
 description = "Sacrificial LLM instances as behavioral probes for prompt injection detection"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -39,8 +39,12 @@ dev = [
     "pytest-cov>=4.0",
     "mypy>=1.0",
     "ruff>=0.1.0",
+    "pip-audit>=2.7.0",
     "anthropic>=0.39.0",
 ]
+
+[project.scripts]
+little-canary = "little_canary.cli:main"
 
 [project.urls]
 Homepage = "https://littlecanary.ai"
